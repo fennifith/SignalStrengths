@@ -1,12 +1,17 @@
 package james.signalstrengths;
 
+import android.annotation.TargetApi;
 import android.os.Build;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.telephony.CellInfoGsm;
+import android.telephony.CellSignalStrengthGsm;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.widget.TextView;
+
+import java.lang.reflect.Method;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
             ((TextView) findViewById(R.id.gsm)).setText(String.valueOf((int) ((signalStrength.getGsmSignalStrength() / 31.0) * 4)));
 
             if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) ((TextView) findViewById(R.id.level)).setText(String.valueOf(signalStrength.getLevel()));
-            else ((TextView) findViewById(R.id.level)).setText("null");
+            else ((TextView) findViewById(R.id.level)).setText("-1");
 
             ((TextView) findViewById(R.id.cdma)).setText(String.valueOf(getSignalStrengthDbm(signalStrength.getCdmaDbm())));
             ((TextView) findViewById(R.id.cdmaEcio)).setText(String.valueOf(getSignalStrengthEcio(signalStrength.getCdmaEcio())));
@@ -46,8 +51,13 @@ public class MainActivity extends AppCompatActivity {
             ((TextView) findViewById(R.id.evdoEcio)).setText(String.valueOf(getSignalStrengthEcio(signalStrength.getEvdoEcio())));
             ((TextView) findViewById(R.id.evdoSnr)).setText(String.valueOf(signalStrength.getEvdoSnr() / 2));
 
-            ((TextView) findViewById(R.id.one)).setText(String.valueOf(getSignalStrength(signalStrength)));
+            ((TextView) findViewById(R.id.asu)).setText(String.valueOf(getSignalStrengthAsu(signalStrength)));
+
+            ((TextView) findViewById(R.id.one)).setText(String.valueOf(getSignalStrengthEcio(getSignalStrength(signalStrength))));
             ((TextView) findViewById(R.id.two)).setText(String.valueOf(getSignalStrength2(signalStrength)));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+                ((TextView) findViewById(R.id.three)).setText(String.valueOf(getSignalStrength3()));
+            else ((TextView) findViewById(R.id.three)).setText("-1");
         }
 
         private int getSignalStrengthDbm(int dbm) {
@@ -65,6 +75,16 @@ public class MainActivity extends AppCompatActivity {
             else if (ecio >= -130) return 2;
             else if (ecio >= -150) return 1;
             else return 0;
+        }
+
+        private int getSignalStrengthAsu(SignalStrength signalStrength) {
+            try {
+                Method method = signalStrength.getClass().getDeclaredMethod("getAsuLevel");
+                method.setAccessible(true);
+                return (int) method.invoke(signalStrength);
+            } catch (Exception e) {
+                return -1;
+            }
         }
 
         private int getSignalStrength(SignalStrength signalStrength) {
@@ -96,6 +116,17 @@ public class MainActivity extends AppCompatActivity {
 
                 return (levelDbm < levelEcio) ? levelDbm : levelEcio;
             } else return signalStrength.getEvdoSnr() / 2;
+        }
+
+        @TargetApi(17)
+        private int getSignalStrength3() {
+            try {
+                CellInfoGsm cellinfogsm = (CellInfoGsm) telephonyManager.getAllCellInfo().get(0);
+                CellSignalStrengthGsm cellSignalStrengthGsm = cellinfogsm.getCellSignalStrength();
+                return getSignalStrengthDbm(cellSignalStrengthGsm.getDbm());
+            } catch (Exception e) {
+                return -1;
+            }
         }
     }
 }

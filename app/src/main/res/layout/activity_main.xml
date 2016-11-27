@@ -102,6 +102,19 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:text="getAsuLevel" />
+
+        <TextView
+            android:id="@+id/asu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:text="asu" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:text="option1" />
 
         <TextView
@@ -124,6 +137,20 @@
             android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
             android:text="two" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="option3 (getCellSignalStrength)" />
+
+        <TextView
+            android:id="@+id/three"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:text="three" />
+
 
     </GridLayout>
 
