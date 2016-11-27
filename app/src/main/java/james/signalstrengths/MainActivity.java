@@ -4,8 +4,13 @@ import android.annotation.TargetApi;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.telephony.CellInfo;
 import android.telephony.CellInfoGsm;
+import android.telephony.CellInfoLte;
+import android.telephony.CellInfoWcdma;
 import android.telephony.CellSignalStrengthGsm;
+import android.telephony.CellSignalStrengthLte;
+import android.telephony.CellSignalStrengthWcdma;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
@@ -41,7 +46,8 @@ public class MainActivity extends AppCompatActivity {
 
             ((TextView) findViewById(R.id.gsm)).setText(String.valueOf((int) ((signalStrength.getGsmSignalStrength() / 31.0) * 4)));
 
-            if ( Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) ((TextView) findViewById(R.id.level)).setText(String.valueOf(signalStrength.getLevel()));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+                ((TextView) findViewById(R.id.level)).setText(String.valueOf(signalStrength.getLevel()));
             else ((TextView) findViewById(R.id.level)).setText("-1");
 
             ((TextView) findViewById(R.id.cdma)).setText(String.valueOf(getSignalStrengthDbm(signalStrength.getCdmaDbm())));
@@ -55,9 +61,13 @@ public class MainActivity extends AppCompatActivity {
 
             ((TextView) findViewById(R.id.one)).setText(String.valueOf(getSignalStrengthEcio(getSignalStrength(signalStrength))));
             ((TextView) findViewById(R.id.two)).setText(String.valueOf(getSignalStrength2(signalStrength)));
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
                 ((TextView) findViewById(R.id.three)).setText(String.valueOf(getSignalStrength3()));
             else ((TextView) findViewById(R.id.three)).setText("-1");
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
+                ((TextView) findViewById(R.id.four)).setText(String.valueOf(getSignalStrength4()));
+            else ((TextView) findViewById(R.id.four)).setText("-1");
         }
 
         private int getSignalStrengthDbm(int dbm) {
@@ -127,6 +137,32 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception e) {
                 return -1;
             }
+        }
+
+        @TargetApi(18)
+        private String getSignalStrength4() {
+            try {
+                for (CellInfo info : telephonyManager.getAllCellInfo()) {
+                    if (info.isRegistered()) {
+                        if (info instanceof CellInfoWcdma) {
+                            CellInfoWcdma cellInfoWcdma = (CellInfoWcdma) telephonyManager.getAllCellInfo().get(0);
+                            CellSignalStrengthWcdma cellSignalStrengthWcdma = cellInfoWcdma.getCellSignalStrength();
+                            return String.valueOf(cellSignalStrengthWcdma.getDbm());
+                        } else if (info instanceof CellInfoGsm) {
+                            CellInfoGsm cellInfogsm = (CellInfoGsm) telephonyManager.getAllCellInfo().get(0);
+                            CellSignalStrengthGsm cellSignalStrengthGsm = cellInfogsm.getCellSignalStrength();
+                            return String.valueOf(cellSignalStrengthGsm.getDbm());
+                        } else if (info instanceof CellInfoLte) {
+                            CellInfoLte cellInfoLte = (CellInfoLte) telephonyManager.getAllCellInfo().get(0);
+                            CellSignalStrengthLte cellSignalStrengthLte = cellInfoLte.getCellSignalStrength();
+                            return String.valueOf(cellSignalStrengthLte.getDbm());
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+
+            return "-1";
         }
     }
 }

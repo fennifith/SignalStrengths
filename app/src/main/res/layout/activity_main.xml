@@ -151,6 +151,19 @@
             android:layout_marginRight="8dp"
             android:text="three" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="option4 (getCellSignalStrength)" />
+
+        <TextView
+            android:id="@+id/four"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:text="four" />
+
 
     </GridLayout>
 
