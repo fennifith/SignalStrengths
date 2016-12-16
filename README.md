@@ -1,2 +1,2 @@
 # SignalStrengths
-Sample app to test different methods of getting the cell signal strength from 0-4.
+Sample app to test different methods of getting an accurate signal strength on different Android phones.
