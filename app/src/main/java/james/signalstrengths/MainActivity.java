@@ -1,6 +1,7 @@
 package james.signalstrengths;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
@@ -40,10 +41,34 @@ public class MainActivity extends AppCompatActivity {
 
         gridLayout = (GridLayout) findViewById(R.id.gridLayout);
 
-        methods = new ArrayList<SignalMethod>(Arrays.asList(
+        methods = new ArrayList<>(Arrays.asList(
+                new SignalMethod("Signal Level") {
+                    @Override
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                        List<Double> values = new ArrayList<>();
+                        for (int i = 1; i < methods.size(); i++) {
+                            double level;
+                            try {
+                                level = methods.get(i).getLevel(signalStrength);
+                            } catch (Exception e) {
+                                continue;
+                            }
+
+                            if (isValidLevel(level) && level > 0)
+                                values.add(level);
+                        }
+
+                        double level = 0;
+                        for (Double value : values) {
+                            level += value;
+                        }
+
+                        return values.size() > 1 ? level / values.size() : level;
+                    }
+                },
                 new SignalMethod("getLevel") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) {
+                    double getLevel(SignalStrength signalStrength) {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
                             return signalStrength.getLevel();
                         else return -1;
@@ -51,43 +76,43 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getGsmSignalStrength") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) {
+                    double getLevel(SignalStrength signalStrength) {
                         return (int) ((signalStrength.getGsmSignalStrength() / 31.0) * 4);
                     }
                 },
                 new SignalMethod("getCdmaDbm") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) {
+                    double getLevel(SignalStrength signalStrength) {
                         return getDbmLevel(signalStrength.getCdmaDbm());
                     }
                 },
                 new SignalMethod("getCdmaEcio") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) {
+                    double getLevel(SignalStrength signalStrength) {
                         return getEcioLevel(signalStrength.getCdmaEcio());
                     }
                 },
                 new SignalMethod("getEvdoDbm") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) {
+                    double getLevel(SignalStrength signalStrength) {
                         return getDbmLevel(signalStrength.getEvdoDbm());
                     }
                 },
                 new SignalMethod("getEvdoEcio") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) {
+                    double getLevel(SignalStrength signalStrength) {
                         return getEcioLevel(signalStrength.getEvdoEcio());
                     }
                 },
                 new SignalMethod("getEvdoSnr") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) {
+                    double getLevel(SignalStrength signalStrength) {
                         return getSnrLevel(signalStrength.getEvdoSnr());
                     }
                 },
                 new SignalMethod("getAsuLevel") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+                    double getLevel(SignalStrength signalStrength) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getAsuLevel");
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
@@ -95,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("isGsm ? getGsm : getCdma") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         if (signalStrength.isGsm()) {
                             if (signalStrength.getGsmSignalStrength() != 99)
                                 return signalStrength.getGsmSignalStrength() * 2 - 113;
@@ -106,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("evdoSnr : (cdmaDbm < cdmaEcio ? dbm : ecio)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         if (signalStrength.getEvdoSnr() == -1) {
                             int levelDbm, levelEcio;
                             int cdmaDbm = signalStrength.getCdmaDbm();
@@ -130,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getAllCellInfo[0].getCellSignalStrength") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2) {
                             for (CellInfo info : telephonyManager.getAllCellInfo()) {
                                 if (info.isRegistered()) {
@@ -156,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getLteDbm (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getLteDbm");
                         method.setAccessible(true);
                         return getDbmLevel((int) method.invoke(signalStrength));
@@ -164,7 +189,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getLteLevel (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getLteLevel");
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
@@ -172,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getLteSignalStrength (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getLteSignalStrength");
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
@@ -180,7 +205,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getLteRsrp (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getLteRsrp");
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
@@ -188,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getLteRsrq (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getLteRsrq");
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
@@ -196,7 +221,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getLteRssnr (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getLteRssnr");
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
@@ -204,7 +229,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getLteCqi (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getLteCqi");
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
@@ -212,7 +237,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getDbm (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getDbm");
                         method.setAccessible(true);
                         return getDbmLevel((int) method.invoke(signalStrength));
@@ -220,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getGsmDbm (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getGsmDbm");
                         method.setAccessible(true);
                         return getDbmLevel((int) method.invoke(signalStrength));
@@ -228,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getGsmLevel (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getGsmLevel");
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
@@ -236,7 +261,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getCdmaLevel (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getCdmaLevel");
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
@@ -244,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getEvdoLevel (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getEvdoLevel");
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
@@ -252,7 +277,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getTdScdmaLevel (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getTdScdmaLevel");
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
@@ -260,7 +285,7 @@ public class MainActivity extends AppCompatActivity {
                 },
                 new SignalMethod("getTdScdmaDbm (reflection)") {
                     @Override
-                    int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
+                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getTdScdmaDbm");
                         method.setAccessible(true);
                         return getDbmLevel((int) method.invoke(signalStrength));
@@ -314,12 +339,16 @@ public class MainActivity extends AppCompatActivity {
         return snr / 2;
     }
 
+    private static boolean isValidLevel(double level) {
+        return level >= 0 && level <= 4;
+    }
+
     private abstract static class SignalMethod {
 
         private String name;
         private TextView nameView, valueView;
 
-        private int level;
+        private double level;
 
         private SignalMethod(String name) {
             this.name = name;
@@ -332,11 +361,13 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception ignored) {
             }
 
-            if (valueView != null)
+            if (valueView != null) {
                 valueView.setText(String.valueOf(level));
+                valueView.setTextColor(isValidLevel(level) ? Color.BLACK : Color.RED);
+            }
         }
 
-        abstract int getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException;
+        abstract double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException;
 
         private void bindView(ViewGroup viewGroup) {
             Context context = viewGroup.getContext();
