@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoGsm;
@@ -46,10 +45,12 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         List<Double> values = new ArrayList<>();
-                        for (int i = 1; i < methods.size(); i++) {
+                        for (SignalMethod method : methods) {
+                            if (method.isExcluded()) continue;
+
                             double level;
                             try {
-                                level = methods.get(i).getLevel(signalStrength);
+                                level = method.getLevel(signalStrength);
                             } catch (Exception e) {
                                 continue;
                             }
@@ -64,6 +65,11 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         return values.size() > 1 ? level / values.size() : level;
+                    }
+
+                    @Override
+                    public boolean isExcluded() {
+                        return true;
                     }
                 },
                 new SignalMethod("getLevel") {
@@ -115,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
                     double getLevel(SignalStrength signalStrength) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getAsuLevel");
                         method.setAccessible(true);
-                        return (int) method.invoke(signalStrength);
+                        return getAsuLevel((int) method.invoke(signalStrength));
                     }
                 },
                 new SignalMethod("isGsm ? getGsm : getCdma") {
@@ -123,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                     double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         if (signalStrength.isGsm()) {
                             if (signalStrength.getGsmSignalStrength() != 99)
-                                return signalStrength.getGsmSignalStrength() * 2 - 113;
+                                return getAsuLevel(signalStrength.getGsmSignalStrength());
                             else
                                 return signalStrength.getGsmSignalStrength();
                         } else return getDbmLevel(signalStrength.getCdmaDbm());
@@ -202,13 +208,18 @@ public class MainActivity extends AppCompatActivity {
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
                     }
+
+                    @Override
+                    public boolean isExcluded() {
+                        return true;
+                    }
                 },
                 new SignalMethod("getLteRsrp (reflection)") {
                     @Override
                     double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getLteRsrp");
                         method.setAccessible(true);
-                        return (int) method.invoke(signalStrength);
+                        return getRsrpLevel((int) method.invoke(signalStrength));
                     }
                 },
                 new SignalMethod("getLteRsrq (reflection)") {
@@ -216,7 +227,12 @@ public class MainActivity extends AppCompatActivity {
                     double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getLteRsrq");
                         method.setAccessible(true);
-                        return (int) method.invoke(signalStrength);
+                        return getRsrqLevel((int) method.invoke(signalStrength));
+                    }
+
+                    @Override
+                    public boolean isExcluded() {
+                        return true;
                     }
                 },
                 new SignalMethod("getLteRssnr (reflection)") {
@@ -224,7 +240,7 @@ public class MainActivity extends AppCompatActivity {
                     double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
                         Method method = signalStrength.getClass().getDeclaredMethod("getLteRssnr");
                         method.setAccessible(true);
-                        return (int) method.invoke(signalStrength);
+                        return getSnrLevel((int) method.invoke(signalStrength));
                     }
                 },
                 new SignalMethod("getLteCqi (reflection)") {
@@ -282,6 +298,11 @@ public class MainActivity extends AppCompatActivity {
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
                     }
+
+                    @Override
+                    public boolean isExcluded() {
+                        return true;
+                    }
                 },
                 new SignalMethod("getTdScdmaDbm (reflection)") {
                     @Override
@@ -289,6 +310,11 @@ public class MainActivity extends AppCompatActivity {
                         Method method = signalStrength.getClass().getDeclaredMethod("getTdScdmaDbm");
                         method.setAccessible(true);
                         return getDbmLevel((int) method.invoke(signalStrength));
+                    }
+
+                    @Override
+                    public boolean isExcluded() {
+                        return true;
                     }
                 }
         ));
@@ -339,6 +365,25 @@ public class MainActivity extends AppCompatActivity {
         return snr / 2;
     }
 
+    private int getAsuLevel(int asu) {
+        if (asu == 99) return -1;
+        else return (2 * asu) - 113;
+    }
+
+    private int getRsrpLevel(int rsrp) {
+        if (rsrp > -84) return 4;
+        else if (rsrp > -102) return 3;
+        else if (rsrp > -111) return 2;
+        else if (rsrp > -112) return 1;
+        else return 0;
+    }
+
+    private int getRsrqLevel(int rsrq) {
+        if (rsrq > -5) return 4;
+        else if (rsrq > -10) return 2;
+        else return 1;
+    }
+
     private static boolean isValidLevel(double level) {
         return level >= 0 && level <= 4;
     }
@@ -363,7 +408,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (valueView != null) {
                 valueView.setText(String.valueOf(level));
-                valueView.setTextColor(isValidLevel(level) ? Color.BLACK : Color.RED);
+                valueView.setTextColor(isExcluded() || isValidLevel(level) ? Color.BLACK : Color.RED);
             }
         }
 
@@ -374,11 +419,17 @@ public class MainActivity extends AppCompatActivity {
             nameView = new TextView(context);
             valueView = new TextView(context);
 
-            nameView.setTextColor(ContextCompat.getColor(context, android.R.color.black));
+            nameView.setTextColor(Color.BLACK);
             nameView.setText(name);
+            nameView.setPadding(10, 10, 10, 10);
+            valueView.setPadding(10, 10, 10, 10);
 
             viewGroup.addView(nameView);
             viewGroup.addView(valueView);
+        }
+
+        public boolean isExcluded() {
+            return false;
         }
     }
 }
