@@ -115,6 +115,11 @@ public class MainActivity extends AppCompatActivity {
                     double getLevel(SignalStrength signalStrength) {
                         return getSnrLevel(signalStrength.getEvdoSnr());
                     }
+
+                    @Override
+                    public boolean isExcluded() {
+                        return true;
+                    }
                 },
                 new SignalMethod("getAsuLevel") {
                     @Override
@@ -133,30 +138,6 @@ public class MainActivity extends AppCompatActivity {
                             else
                                 return signalStrength.getGsmSignalStrength();
                         } else return getDbmLevel(signalStrength.getCdmaDbm());
-                    }
-                },
-                new SignalMethod("evdoSnr : (cdmaDbm < cdmaEcio ? dbm : ecio)") {
-                    @Override
-                    double getLevel(SignalStrength signalStrength) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException {
-                        if (signalStrength.getEvdoSnr() == -1) {
-                            int levelDbm, levelEcio;
-                            int cdmaDbm = signalStrength.getCdmaDbm();
-                            int cdmaEcio = signalStrength.getCdmaEcio();
-
-                            if (cdmaDbm >= -75) levelDbm = 4;
-                            else if (cdmaDbm >= -85) levelDbm = 3;
-                            else if (cdmaDbm >= -95) levelDbm = 2;
-                            else if (cdmaDbm >= -100) levelDbm = 1;
-                            else levelDbm = 0;
-
-                            if (cdmaEcio >= -90) levelEcio = 4;
-                            else if (cdmaEcio >= -110) levelEcio = 3;
-                            else if (cdmaEcio >= -130) levelEcio = 2;
-                            else if (cdmaEcio >= -150) levelEcio = 1;
-                            else levelEcio = 0;
-
-                            return (levelDbm < levelEcio) ? levelDbm : levelEcio;
-                        } else return getSnrLevel(signalStrength.getEvdoSnr());
                     }
                 },
                 new SignalMethod("getAllCellInfo[0].getCellSignalStrength") {
@@ -192,6 +173,11 @@ public class MainActivity extends AppCompatActivity {
                         method.setAccessible(true);
                         return getDbmLevel((int) method.invoke(signalStrength));
                     }
+
+                    @Override
+                    public boolean isExcluded() {
+                        return true;
+                    }
                 },
                 new SignalMethod("getLteLevel (reflection)") {
                     @Override
@@ -199,6 +185,11 @@ public class MainActivity extends AppCompatActivity {
                         Method method = signalStrength.getClass().getDeclaredMethod("getLteLevel");
                         method.setAccessible(true);
                         return (int) method.invoke(signalStrength);
+                    }
+
+                    @Override
+                    public boolean isExcluded() {
+                        return true;
                     }
                 },
                 new SignalMethod("getLteSignalStrength (reflection)") {
@@ -221,6 +212,11 @@ public class MainActivity extends AppCompatActivity {
                         method.setAccessible(true);
                         return getRsrpLevel((int) method.invoke(signalStrength));
                     }
+
+                    @Override
+                    public boolean isExcluded() {
+                        return true;
+                    }
                 },
                 new SignalMethod("getLteRsrq (reflection)") {
                     @Override
@@ -241,6 +237,11 @@ public class MainActivity extends AppCompatActivity {
                         Method method = signalStrength.getClass().getDeclaredMethod("getLteRssnr");
                         method.setAccessible(true);
                         return getSnrLevel((int) method.invoke(signalStrength));
+                    }
+
+                    @Override
+                    public boolean isExcluded() {
+                        return true;
                     }
                 },
                 new SignalMethod("getLteCqi (reflection)") {
@@ -403,12 +404,13 @@ public class MainActivity extends AppCompatActivity {
             level = -1;
             try {
                 level = getLevel(signalStrength);
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
             if (valueView != null) {
                 valueView.setText(String.valueOf(level));
-                valueView.setTextColor(isExcluded() || isValidLevel(level) ? Color.BLACK : Color.RED);
+                valueView.setTextColor(isExcluded() ? Color.GRAY : (isValidLevel(level) ? Color.BLACK : Color.RED));
             }
         }
 
