@@ -25,7 +25,7 @@ double level = SignalStrengths.get(SignalStrengths.METHOD_LEVEL, signalStrength)
 
 #### First Valid Level
 
-This gets the first valid signal level available from any method in order of accuracy. See [Excluding Methods]() and [Custom Methods]() for ways to change this method's behavior.
+This gets the first valid signal level available from any method in order of accuracy. See [Excluding Methods](https://github.com/TheAndroidMaster/SignalStrengths/blob/master/README.md#excluding-methods) and [Custom Methods](https://github.com/TheAndroidMaster/SignalStrengths/blob/master/README.md#custom-methods) for ways to change this method's behavior.
 
 ``` java
 double level = SignalStrengths.getFirstValid(signalStrength);
@@ -33,7 +33,7 @@ double level = SignalStrengths.getFirstValid(signalStrength);
 
 #### Average Level
 
-This gets the average of all the valid levels. To exclude a level, see [Excluding Methods]().
+This gets the average of all the valid levels. To exclude a level, see [Excluding Methods](https://github.com/TheAndroidMaster/SignalStrengths/blob/master/README.md#excluding-methods).
 
 ``` java
 double level = SignalStrengths.getAverage(signalStrength);
