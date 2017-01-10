@@ -1,5 +1,29 @@
 apply plugin: 'com.android.library'
 
+ext {
+    bintrayRepo = 'maven'
+    bintrayName = 'signalstrengths'
+
+    publishedGroupId = 'james'
+    libraryName = 'SignalStrengths'
+    artifact = 'signalstrengths'
+
+    libraryDescription = 'A library with the purpose of getting an accurate signal strength on different Android phones.'
+
+    siteUrl = 'https://github.com/TheAndroidMaster/SignalStrengths'
+    gitUrl = 'https://github.com/TheAndroidMaster/SignalStrengths.git'
+
+    libraryVersion = '0.1'
+
+    developerId = 'TheAndroidMaster'
+    developerName = 'James Fenn'
+    developerEmail = '18jafenn90@gmail.com'
+
+    licenseName = 'The Apache Software License, Version 2.0'
+    licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+    allLicenses = ["Apache-2.0"]
+}
+
 android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
@@ -8,7 +32,7 @@ android {
         minSdkVersion 7
         targetSdkVersion 25
         versionCode 1
-        versionName "1.0"
+        versionName "0.1"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -20,3 +44,11 @@ android {
         }
     }
 }
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile 'junit:junit:4.12'
+}
+
+apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
+apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/bintrayv1.gradle'
