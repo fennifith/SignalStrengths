@@ -6,7 +6,7 @@ A library and sample application with the purpose of getting an accurate signal 
 ### Setup
 
 The Gradle dependency is available through jCenter, which is used by default in Android Studio. To add the module to your project, copy this line into the dependencies section of your build.gradle file.
-```
+``` gradle
 compile 'james.signalstrengths:signalstrengths:0.0.4'
 ```
 
