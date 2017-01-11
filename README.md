@@ -5,7 +5,10 @@ A library and sample application with the purpose of getting an accurate signal 
 
 ### Setup
 
-The library is currently not on maven or jCenter, so the best method to set up the library is to directly download this project and build it from source.
+The Gradle dependency is available through jCenter, which is used by default in Android Studio. To add the module to your project, copy this line into the dependencies section of your build.gradle file.
+```
+compile 'james.signalstrengths:signalstrengths:0.0.4'
+```
 
 ### Listening for Signal Changes
 
