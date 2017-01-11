@@ -1,1 +1,1 @@
-include ':app', ':signalstrengthslib'
+include ':app', ':signalstrengths'
