@@ -1,7 +1,6 @@
-# SignalStrengths
-A library and sample application with the purpose of getting an accurate signal strength on different Android phones.
+SignalStrengths is a library and sample application with the purpose of getting an accurate signal strength on different Android phones.
 
-For testing and experimentation purposes, a sample apk can be downloaded [here](https://github.com/TheAndroidMaster/SignalStrengths/releases).
+For testing and experimentation purposes, a sample apk can be downloaded [here](https://theandroidmaster.github.io/about/releases/#TheAndroidMaster/SignalStrengths).
 
 ## Usage
 
