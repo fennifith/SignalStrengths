@@ -1,6 +1,6 @@
 SignalStrengths is a library and sample application with the purpose of getting an accurate signal strength on different Android phones.
 
-For testing and experimentation purposes, a sample apk can be downloaded [here](https://theandroidmaster.github.io/about/releases/#TheAndroidMaster/SignalStrengths).
+For testing and experimentation purposes, a sample apk can be downloaded [here](https://jfenn.me/projects/signalstrengths).
 
 ## Usage
 
@@ -37,7 +37,7 @@ double level = SignalStrengths.getFirstValid(signalStrength);
 
 #### Average Level
 
-This gets the average of all the valid levels. To exclude a level, see [Excluding Methods](https://github.com/TheAndroidMaster/SignalStrengths/blob/master/README.md#excluding-methods).
+This gets the average of all the valid levels. To exclude a level, see [Excluding Methods](#excluding-methods).
 
 ``` java
 double level = SignalStrengths.getAverage(signalStrength);
